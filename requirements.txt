@@ -1,0 +1,6 @@
+git+https://github.com/The-CJ/osu_irc.py.git#egg=osu_irc
+pymongo
+hikari
+hikari-crescent
+osu.py
+tinydb

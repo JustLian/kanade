@@ -1,0 +1,5 @@
+config.json
+storage.json
+simple.json
+*.pyc
+.venv
