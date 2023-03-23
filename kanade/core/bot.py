@@ -1,9 +1,7 @@
 import hikari
 import crescent
-import miru
 from kanade import cfg
 from kanade import db
-from osu import AsynchronousClient
 
 
 class Model:
@@ -21,7 +19,6 @@ bot = hikari.GatewayBot(
     intents=hikari.Intents.ALL
 )
 
-miru.install(bot)
 model = Model()
 bot.event_manager.subscribe(hikari.StartedEvent, model.on_ready)
 client = crescent.Client(bot, model=model, default_guild=cfg['discord']['guild'])
