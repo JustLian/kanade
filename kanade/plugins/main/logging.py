@@ -24,6 +24,12 @@ async def send(guild, event, **kwargs):
 @plugin.include
 @crescent.event
 async def message_edit(event: hikari.GuildMessageUpdateEvent):
+    if event.author.is_bot:
+        return
+    before = (event.old_message.content if event.old_message.content else '`пусто`') if event.old_message else '`нет информации`'
+    after = event.message.content if event.message.content else '`пусто`'
+    if before == after:
+        return
     await send(event.guild_id, 'messages', embed=hikari.Embed(
         title='Сообщение изменено',
         color=kanade.Colors.WARNING,
@@ -33,9 +39,9 @@ async def message_edit(event: hikari.GuildMessageUpdateEvent):
     ).add_field(
         'Канал', '<#{}>'.format(event.channel_id)
     ).add_field(
-        'До изменения', (event.old_message.content if event.old_message.content else '`пусто`') if event.old_message else '`нет информации`'
+        'До изменения', before
     ).add_field(
-        'После изменения', event.message.content if event.message.content else '`пусто`'
+        'После изменения', after
     ).set_footer(
         event.message_id
     ))
