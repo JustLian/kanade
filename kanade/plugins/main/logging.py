@@ -67,29 +67,42 @@ async def message_deletion(event: hikari.GuildMessageDeleteEvent):
 
 @plugin.include
 @crescent.event
-async def role_added(event: hikari.MemberUpdateEvent):
-    old, new = set(event.old_member.role_ids), set(event.member.role_ids)
-    if old == new:
-        return
+async def roles(event: hikari.AuditLogEntryCreateEvent):
+    if event.entry.action_type == hikari.AuditLogEventType.MEMBER_ROLE_UPDATE:
+        removed, added = [], []
+        for change in event.entry.changes:
+            if change.key == hikari.AuditLogChangeKey.REMOVE_ROLE_FROM_MEMBER:
+                removed.extend(change.new_value.keys())
+            elif change.key == hikari.AuditLogChangeKey.ADD_ROLE_TO_MEMBER:
+                added.extend(change.new_value.keys())
+    if removed != []:
+        await send(
+            event.guild_id, 'roles', embed=hikari.Embed(
+                title='Роли убраны',
+                description='{} убирает роли пользователя {}'.format(
+                    await event.entry.fetch_user(),
+                    await event.entry.app.rest.fetch_user(event.entry.target_id)
+                ), color=kanade.Colors.WARNING,
+                timestamp=datetime.now(tz=timezone.utc)
+            ).set_footer(
+                event.entry.target_id
+            ).add_field(
+                'Роли', ' '.join(['<@&{}>'.format(r) for r in removed])
+            )
+        )
 
-    roles = old.difference(new)
-    rr = None
-    for r in roles:
-        rr = r
-        break
-
-    embed = hikari.Embed(
-        color=kanade.Colors.WARNING,
-        timestamp=datetime.now(tz=timezone.utc)
-    ).add_field(
-        'Роли', ' '.join(['<@{}>'.format(r) for r in roles])
-    ).set_footer(
-        event.member.id
-    )
-    if rr in new:
-        embed.title='Роли добавлены'
-        embed.description='{} добавляет роли пользователю {}'.format(event.user, event.member)
-    else:
-        embed.title='Роли убраны'
-        embed.description='{} убирает роли пользователя {}'.format(event.user, event.member)
-    await send(event.guild_id, 'roles', embed=embed)
+    if added != []:
+        await send(
+            event.guild_id, 'roles', embed=hikari.Embed(
+                title='Роли добавлены',
+                description='{} добавляет роли пользователю {}'.format(
+                    await event.entry.fetch_user(),
+                    await event.entry.app.rest.fetch_user(event.entry.target_id)
+                ), color=kanade.Colors.SUCCESS,
+                timestamp=datetime.now(tz=timezone.utc)
+            ).set_footer(
+                event.entry.target_id
+            ).add_field(
+                'Роли', ' '.join(['<@&{}>'.format(r) for r in added])
+            )
+        )
