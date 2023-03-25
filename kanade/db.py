@@ -1,6 +1,5 @@
 from pymongo.mongo_client import MongoClient
 from kanade import cfg
-from tinydb import TinyDB
 import os
 
 
@@ -8,9 +7,6 @@ _host = cfg['mongo']['host']
 _port = cfg['mongo']['port']
 _username = cfg['mongo']['username']
 _password = cfg['mongo']['password']
-
-
-db = TinyDB('./storage.json')
 
 
 def connect():
