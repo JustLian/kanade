@@ -70,7 +70,7 @@ async def message_deletion(event: hikari.GuildMessageDeleteEvent):
         color=kanade.Colors.ERROR,
         timestamp=datetime.now(tz=timezone.utc)
     ).add_field(
-        'Автор сообщения', '{} ({})'.format(event.old_message.author, event.old_messageauthor.id)
+        'Автор сообщения', '{} ({})'.format(event.old_message.author, event.old_message.author.id)
     ).add_field(
         'Канал', '<#{}>'.format(event.channel_id)
     ).add_field(
