@@ -17,6 +17,7 @@ s = lambda x: '🟢' if x else '🔴'
     name='status'
 )
 async def status(ctx: crescent.Context):
+    # TODO: add real values
     await ctx.respond(embed=hikari.Embed(
         title='Status',
         description='\n'.join((

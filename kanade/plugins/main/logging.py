@@ -9,6 +9,7 @@ from time import time
 
 plugin = crescent.Plugin()
 handeled = []
+quited = {}
 
 
 async def send(guild, event, **kwargs):
@@ -122,7 +123,14 @@ async def roles(event: hikari.AuditLogEntryCreateEvent):
                 )
             )
     elif event.entry.action_type == hikari.AuditLogEventType.MEMBER_BAN_ADD:
-        mem = await event.app.rest.fetch_member(event.guild_id, event.entry.target_id)
+        for _ in range(5):
+            if event.entry.target_id in quited:
+                break
+            await asyncio.sleep(1.5)
+        else:
+            return
+
+        mem = quited[event.entry.target_id]
         handeled.append(mem.id)
         await send(
             event.guild_id, 'kick', embed=hikari.Embed(
@@ -131,12 +139,19 @@ async def roles(event: hikari.AuditLogEntryCreateEvent):
                     await event.entry.fetch_user(), mem, mem.id
                 ), color=kanade.Colors.ERROR
             ).add_field(
-                'Причина', event.entry.reason
+                'Причина', event.entry.reason if event.entry.reason else '`не указана`'
             )
         )
     
     elif event.entry.action_type == hikari.AuditLogEventType.MEMBER_KICK:
-        mem = await event.app.rest.fetch_member(event.guild_id, event.entry.target_id)
+        for _ in range(5):
+            if event.entry.target_id in quited:
+                break
+            await asyncio.sleep(1.5)
+        else:
+            return
+
+        mem = quited[event.entry.target_id]
         handeled.append(mem.id)
         await send(
             event.guild_id, 'kick', embed=hikari.Embed(
@@ -145,7 +160,7 @@ async def roles(event: hikari.AuditLogEntryCreateEvent):
                     await event.entry.fetch_user(), mem, mem.id
                 ), color=kanade.Colors.ERROR
             ).add_field(
-                'Причина', event.entry.reason
+                'Причина', event.entry.reason if event.entry.reason else '`не указана`'
             )
         )
 
@@ -183,14 +198,17 @@ async def member_joined(event: hikari.MemberCreateEvent):
 
 @plugin.include
 @crescent.event
-async def member_left(event: hikari.MemberCreateEvent):
+async def member_left(event: hikari.MemberDeleteEvent):
+    global quited
+    quited[event.old_member.id] = event.old_member
     await asyncio.sleep(4)
-    if event.member.id in handeled:
+    if event.old_member.id in handeled:
+        handeled.remove(event.old_member.id)
         return
 
     await send(event.guild_id, 'quit', embed=hikari.Embed(
         title='Пользователь покинул сервер',
-        description="{} ({})".format(event.member, event.member.id),
+        description="{} ({})".format(event.old_member, event.old_member.id),
         timestamp=datetime.now(tz=timezone.utc),
         color=kanade.Colors.SUCCESS
     ).add_field(
