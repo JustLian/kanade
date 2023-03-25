@@ -53,13 +53,24 @@ async def message_edit(event: hikari.GuildMessageUpdateEvent):
 @plugin.include
 @crescent.event
 async def message_deletion(event: hikari.GuildMessageDeleteEvent):
-    author = (await event.app.rest.fetch_message(event.channel_id, event.message_id)).author
+    if event.old_message is None:
+        await send(
+            event.guild_id, 'messages', embed=hikari.Embed(
+                title='Сообщение удалено',
+                description='Неудалось найти автора и содержание сообщения',
+                color=kanade.Colors.ERROR
+            ).add_field(
+                'Канал', '<#{}>'.format(event.channel_id)
+            )
+        )
+        return
+
     await send(event.guild_id, 'messages', embed=hikari.Embed(
         title='Сообщение удалено',
         color=kanade.Colors.ERROR,
         timestamp=datetime.now(tz=timezone.utc)
     ).add_field(
-        'Автор сообщения', '{} ({})'.format(author, author.id)
+        'Автор сообщения', '{} ({})'.format(event.old_message.author, event.old_messageauthor.id)
     ).add_field(
         'Канал', '<#{}>'.format(event.channel_id)
     ).add_field(
