@@ -1,3 +1,4 @@
+import asyncio
 import hikari
 import crescent
 import kanade
@@ -7,6 +8,7 @@ from time import time
 
 
 plugin = crescent.Plugin()
+handeled = []
 
 
 async def send(guild, event, **kwargs):
@@ -51,12 +53,13 @@ async def message_edit(event: hikari.GuildMessageUpdateEvent):
 @plugin.include
 @crescent.event
 async def message_deletion(event: hikari.GuildMessageDeleteEvent):
+    author = (await event.app.rest.fetch_message(event.channel_id, event.message_id)).author
     await send(event.guild_id, 'messages', embed=hikari.Embed(
         title='Сообщение удалено',
         color=kanade.Colors.ERROR,
         timestamp=datetime.now(tz=timezone.utc)
     ).add_field(
-        'Автор сообщения', '{} ({})'.format(event.old_message.author, event.old_message.author.id)
+        'Автор сообщения', '{} ({})'.format(author, author.id)
     ).add_field(
         'Канал', '<#{}>'.format(event.channel_id)
     ).add_field(
@@ -107,7 +110,33 @@ async def roles(event: hikari.AuditLogEntryCreateEvent):
                     'Роли', ' '.join(['<@&{}>'.format(r) for r in added])
                 )
             )
-
+    elif event.entry.action_type == hikari.AuditLogEventType.MEMBER_BAN_ADD:
+        mem = await event.app.rest.fetch_member(event.guild_id, event.entry.target_id)
+        handeled.append(mem.id)
+        await send(
+            event.guild_id, 'kick', embed=hikari.Embed(
+                title='Блокировка выдана',
+                description='{} выдаёт блокировку пользователю {} ({})'.format(
+                    await event.entry.fetch_user(), mem, mem.id
+                ), color=kanade.Colors.ERROR
+            ).add_field(
+                'Причина', event.entry.reason
+            )
+        )
+    
+    elif event.entry.action_type == hikari.AuditLogEventType.MEMBER_KICK:
+        mem = await event.app.rest.fetch_member(event.guild_id, event.entry.target_id)
+        handeled.append(mem.id)
+        await send(
+            event.guild_id, 'kick', embed=hikari.Embed(
+                title='Пользователь выгнан',
+                description='{} выгоняет {} ({})'.format(
+                    await event.entry.fetch_user(), mem, mem.id
+                ), color=kanade.Colors.ERROR
+            ).add_field(
+                'Причина', event.entry.reason
+            )
+        )
 
 @plugin.include
 @crescent.event
@@ -131,11 +160,28 @@ async def invite_created(event: hikari.InviteCreateEvent):
 async def member_joined(event: hikari.MemberCreateEvent):
     await send(event.guild_id, 'join', embed=hikari.Embed(
         title='Пользователь присоединился к серверу',
-        description=str(event.member),
+        description="{} ({})".format(event.member, event.member.id),
         timestamp=datetime.now(tz=timezone.utc),
         color=kanade.Colors.SUCCESS
     ).add_field(
-        'Дата регистрации', '<t:{}:R>'.format(event.member.created_at.timestamp())
+        'Дата регистрации', '<t:{}:R>'.format(round(event.member.created_at.timestamp()))
+    ).add_field(
+        'Количество участников', event.get_guild().member_count
+    ))
+
+
+@plugin.include
+@crescent.event
+async def member_left(event: hikari.MemberCreateEvent):
+    await asyncio.sleep(4)
+    if event.member.id in handeled:
+        return
+
+    await send(event.guild_id, 'quit', embed=hikari.Embed(
+        title='Пользователь покинул сервер',
+        description="{} ({})".format(event.member, event.member.id),
+        timestamp=datetime.now(tz=timezone.utc),
+        color=kanade.Colors.SUCCESS
     ).add_field(
         'Количество участников', event.get_guild().member_count
     ))
