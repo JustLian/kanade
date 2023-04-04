@@ -23,6 +23,13 @@ settings = {
         'invites': ('приглашения', hikari.GuildTextChannel),
         'messages': ('сообщения', hikari.GuildTextChannel),
         'roles': ('роли', hikari.GuildTextChannel)
+    },
+    'greetings': {
+        '_': 'сообщения при входе',
+        'title': ('заголовок', str),
+        'description': ('описание', str),
+        'channel': ('канал', hikari.GuildTextChannel),
+        'enabled': ('включить?', bool)
     }
 }
 
@@ -61,6 +68,21 @@ async def parse_param(msg: hikari.Message, t):
         
         return (c.id, c.mention)
 
+    if t == str:
+        val = msg.content
+
+        if len(val) == 0:
+            return (None, '`пусто`')
+        
+        return (val, val)
+
+    if t == bool:
+        if '+' in msg.content:
+            return (True, '+')
+        
+        elif '-' in msg.content:
+            return (False, '-')
+
     return None
 
 
@@ -95,9 +117,17 @@ class Settings:
         t = settings[self.section][self.key][1]
         if t == hikari.GuildTextChannel:
             embed.description = 'Введите упоминание текстового канал'
-            await ctx.respond(embed=embed)
+
+        elif t == str:
+            embed.description = 'Введите новое текстовое значение'
+
+        elif t == bool:
+            embed.description = 'Отправьте + или -'
+
         else:
             return await ctx.respond(embed=hikari.Embed(title='unknown param type', color=kanade.Colors.ERROR))
+
+        await ctx.respond(embed=embed)
 
         try:
             msg: hikari.GuildMessageCreateEvent = await plugin.app.wait_for(hikari.MessageCreateEvent, 15, lambda msg: msg.author_id == ctx.user.id)
@@ -124,4 +154,4 @@ class Settings:
             title='Успешно',
             description='Новое значение параметра: {}'.format(r[1]),
             color=kanade.Colors.SUCCESS
-        ).set_footer('raw: {}'.format(r[0])))
+        ).set_footer('raw: {}'.format(r[0] if len(str(r[0])) < 80 else '`too long`')))

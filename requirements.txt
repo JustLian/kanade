@@ -3,3 +3,4 @@ hikari
 hikari-crescent
 hikari-toolbox
 asyncio
+html2image

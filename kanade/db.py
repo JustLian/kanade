@@ -53,5 +53,11 @@ def defaults(collection) -> dict:
                 "join": None,
                 "messages": None,
                 "roles": None
+            },
+            "greetings": {
+                "enabled": False,
+                "title": "Новый пользователь!",
+                "description": "Добро пожаловать на сервер {guild_name}, {user_mention}!",
+                "channel": None
             }
         }
