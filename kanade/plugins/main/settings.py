@@ -70,6 +70,15 @@ async def parse_param(msg: hikari.Message, t):
 
     if t == str:
         val = msg.content
+        if val.startswith('```'):
+            val = val[3:]
+        if val.endswith('```'):
+            val = val[:-3]
+        
+        if val.startswith('`'):
+            val = val[1:]
+        if val.endswith('`'):
+            val = val[:-1]
 
         if len(val) == 0:
             return (None, '`пусто`')
@@ -119,7 +128,7 @@ class Settings:
             embed.description = 'Введите упоминание текстового канал'
 
         elif t == str:
-            embed.description = 'Введите новое текстовое значение'
+            embed.description = 'Введите новое текстовое значение (можно использовать \\`\\`\\`ЗНАЧЕНИЕ\\`\\`\\`)'
 
         elif t == bool:
             embed.description = 'Отправьте + или -'
