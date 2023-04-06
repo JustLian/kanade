@@ -58,7 +58,7 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild):
 @plugin.include
 @crescent.event
 async def greeting(event: hikari.MemberCreateEvent):
-    data = db.find_document(plugin.model.db_guilds, {'_id': event.guild.id})
+    data = db.find_document(plugin.model.db_guilds, {'_id': event.guild_id})
 
     embed, card_file = await construct_embed(event.member, event.get_guild())
     try:
