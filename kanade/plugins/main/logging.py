@@ -28,7 +28,7 @@ async def send(guild, event, **kwargs):
 @plugin.include
 @crescent.event
 async def message_edit(event: hikari.GuildMessageUpdateEvent):
-    if event.author.is_bot:
+    if event.author and event.author.is_bot:
         return
     before = (event.old_message.content if event.old_message.content else '`пусто`') if event.old_message else '`нет информации`'
     after = event.message.content if event.message.content else '`пусто`'
