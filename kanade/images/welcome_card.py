@@ -92,7 +92,12 @@ def get_text_size(text, width, font_path='./assets/font.ttf') -> tuple[float, in
     return size, w, h
 
 
-def composite_frame(guild, username, img, pfp, glow, border, u_font, g_font, uw, uh, gw, gh):
+def composite_frame(
+        guild: str, username: str,
+        img: Image.Image, pfp: Image.Image,
+        glow: Image.Image, border: Image.Image,
+        u_font, g_font, uw, uh, gw, gh, text_color
+    ):
     """Composite single frame of welcome card"""
     img = img.copy()
 
@@ -102,18 +107,19 @@ def composite_frame(guild, username, img, pfp, glow, border, u_font, g_font, uw,
     # Drawing text
     d = ImageDraw.ImageDraw(img)
     text_spacing = img.size[1] * 0.05
+    
     d.text(
         ((img.size[0] + uw) // 2,
         (img.size[1] - uh - gh + text_spacing) // 2),
-        username, (255,) * 3, u_font,
+        username, text_color, u_font,
         anchor='mm', align='center'
     )
     d.text(
-        ((img.size[0]) // 2 + gw * 1.5,
+        (img.size[0] // 2 + gw,
         (img.size[1] + uh + gh - text_spacing) // 2),
-        guild, (150,) * 3, g_font,
+        guild, text_color, g_font,
         anchor='mm', align='center'
-    )
+    )   
 
     # Adding image glow and pfp
     img.paste(glow, (
@@ -127,6 +133,8 @@ def composite_frame(guild, username, img, pfp, glow, border, u_font, g_font, uw,
     return img
 
 
+
+
 def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/font.ttf") -> BytesIO:
     """Generate welcome card gif"""
 
@@ -136,7 +144,10 @@ def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/fo
     if not hasattr(bg, "is_animated"):
         def bg_sequence():
             yield bg
+        middle_frame = bg
     else:
+        bg.seek(bg.n_frames // 2)
+        middle_frame = bg.copy()
         def bg_sequence():
             bg.seek(1)
 
@@ -146,6 +157,22 @@ def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/fo
                     yield bg.filter(ImageFilter.GaussianBlur(4))
             except EOFError:
                 pass
+
+
+    # get average color of the right half of the image as the background color
+    half_width = middle_frame.size[0] // 2
+    half_height = middle_frame.size[1]
+    right_half = middle_frame.crop((half_width, 0, middle_frame.size[0], half_height))
+    background_color = (
+        int(sum(c[0] for c in right_half.getdata())) // (half_width * half_height),
+        int(sum(c[1] for c in right_half.getdata())) // (half_width * half_height),
+        int(sum(c[2] for c in right_half.getdata())) // (half_width * half_height),
+    )
+    
+    if sum(background_color) / 3 > 128:  # if background is bright
+        text_color = (0, 0, 0)  # use black text
+    else:
+        text_color = (255, 255, 255)  # use white text
 
     # pfp stuff
     pfp = add_corners(
@@ -158,7 +185,7 @@ def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/fo
 
     # Settings up text
     username_size, uw, uh = get_text_size(username, round(bg.size[0] // 2 * .95))
-    guild_size, gw, gh = get_text_size(guild, round(bg.size[0] // 2 * .3))
+    guild_size, gw, gh = get_text_size(guild, round(bg.size[0] // 2 * .5))
     u_font = ImageFont.truetype(font_path, username_size)
     g_font = ImageFont.truetype(font_path, guild_size)
 
@@ -168,7 +195,7 @@ def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/fo
     ):
         frame = composite_frame(
             guild, username, bg_frame, pfp, glow.rotate(d1), compose_border(bg.size, d2),
-            u_font, g_font, uw, uh, gw, gh
+            u_font, g_font, uw, uh, gw, gh, text_color
         )
         fobj = BytesIO()
         frame.save(fobj, 'GIF')
