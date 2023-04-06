@@ -58,6 +58,7 @@ def defaults(collection) -> dict:
                 "enabled": False,
                 "title": "Новый пользователь!",
                 "description": "Добро пожаловать на сервер {guild_name}, {user_mention}!",
-                "channel": None
+                "channel": None,
+                "color": "#ffffff"
             }
         }

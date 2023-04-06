@@ -29,7 +29,8 @@ settings = {
         'title': ('заголовок', str),
         'description': ('описание', str),
         'channel': ('канал', hikari.GuildTextChannel),
-        'enabled': ('включить?', bool)
+        'enabled': ('включить?', bool),
+        'color': ('цвет (HEX)', str)
     }
 }
 

@@ -19,6 +19,11 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild):
     if not data['greetings']['enabled']:
         return
     
+    try:
+        embed_color = hikari.Color.from_hex_code(data['greetings']['color'])
+    except ValueError:
+        return hikari.Embed(title='НЕВЕРНЫЙ HEX', color=kanade.Colors.ERROR), None
+    
     # downloading user's pfp
     io_data = None
     async with aiohttp.ClientSession() as session:
@@ -46,7 +51,7 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild):
             username=str(member),
             member_count=guild.member_count
         ),
-        color=kanade.Colors.ERROR
+        color=embed_color
     ).set_image(card_file), card_file
 
 
