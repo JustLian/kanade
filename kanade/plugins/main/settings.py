@@ -31,6 +31,14 @@ settings = {
         'channel': ('канал', hikari.GuildTextChannel),
         'enabled': ('включить?', bool),
         'color': ('цвет (HEX)', str)
+    },
+    'farewell': {
+        '_': 'сообщения при выходе',
+        'title': ('заголовок', str),
+        'description': ('описание', str),
+        'channel': ('канал', hikari.GuildTextChannel),
+        'enabled': ('включить?', bool),
+        'color': ('цвет (HEX)', str)
     }
 }
 

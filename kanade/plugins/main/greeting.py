@@ -13,7 +13,7 @@ from kanade.plugins.main.debug import debug
 plugin = crescent.Plugin()
 
 
-async def construct_embed(member: hikari.Member, guild: hikari.Guild):
+async def construct_embed(member: hikari.Member, guild: hikari.Guild) -> hikari.Embed:
     data = db.find_document(plugin.model.db_guilds, {'_id': guild.id})
 
     if not data['greetings']['enabled']:
@@ -58,9 +58,12 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild):
 @plugin.include
 @crescent.event
 async def greeting(event: hikari.MemberCreateEvent):
-    data = db.find_document(plugin.model.db_guilds, {'_id': event.guild_id})
+    r = await construct_embed(event.member, event.get_guild())
+    if r is None:
+        return
+    embed, card_file = r
 
-    embed, card_file = await construct_embed(event.member, event.get_guild())
+    data = db.find_document(plugin.model.db_guilds, {'_id': event.guild_id})
     try:
         await plugin.client.app.rest.create_message(
             data['greetings']['channel'],
@@ -80,7 +83,7 @@ async def greeting(event: hikari.MemberCreateEvent):
 )
 async def preview(ctx: crescent.Context) -> None:
     await ctx.defer()
-
+    
     embed, card_file = await construct_embed(
         ctx.member, ctx.guild
     )

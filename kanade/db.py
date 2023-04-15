@@ -60,5 +60,12 @@ def defaults(collection) -> dict:
                 "description": "Добро пожаловать на сервер {guild_name}, {user_mention}!",
                 "channel": None,
                 "color": "#ffffff"
+            },
+            "farewell": {
+                "enabled": False,
+                "title": "Пользователь вышел :(",
+                "description": "ПОльзователь {username} покинул наш сервер!",
+                "channel": None,
+                "color": "#ffffff"
             }
         }
