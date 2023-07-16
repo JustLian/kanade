@@ -13,7 +13,7 @@ from kanade.plugins.main.debug import debug
 plugin = crescent.Plugin()
 
 
-async def construct_embed(member: hikari.Member, guild: hikari.Guild) -> hikari.Embed:
+async def construct_embed(member: hikari.Member, guild: hikari.RESTGuild) -> hikari.Embed:
     data = db.find_document(plugin.model.db_guilds, {'_id': guild.id})
 
     if not data['greetings']['enabled']:
@@ -49,10 +49,7 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild) -> hikari.
             guild_name=guild.name,
             user_mention=member.mention,
             username=str(member),
-            member_count=(
-                (await guild.app.rest.fetch_guild(guild)).approximate_member_count
-                if '{member_count}' in data['farewell']['description'] else None
-            )
+            member_count=guild.approximate_member_count
         ),
         color=embed_color
     ).set_image(card_file), card_file
@@ -61,8 +58,7 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild) -> hikari.
 @plugin.include
 @crescent.event
 async def greeting(event: hikari.MemberCreateEvent):
-    guild = await plugin.client.app.rest.fetch_guild(event.guild_id)
-    r = await construct_embed(event.member, guild)
+    r = await construct_embed(event.member, event.get_guild())
     if r is None:
         return
     embed, card_file = r
