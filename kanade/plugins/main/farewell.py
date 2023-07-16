@@ -45,7 +45,8 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild) -> hikari.
 @plugin.include
 @crescent.event
 async def farewell(event: hikari.MemberDeleteEvent) -> None:
-    r = await construct_embed(event.old_member, event.get_guild())
+    guild = await plugin.client.app.rest.fetch_guild(event.guild_id)
+    r = await construct_embed(event.member, guild)
     if r is None:
         return
     embed, card_file = r
