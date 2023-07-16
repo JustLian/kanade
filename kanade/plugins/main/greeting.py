@@ -49,7 +49,10 @@ async def construct_embed(member: hikari.Member, guild: hikari.Guild) -> hikari.
             guild_name=guild.name,
             user_mention=member.mention,
             username=str(member),
-            member_count=guild.member_count
+            member_count=(
+                (await guild.app.rest.fetch_guild(guild)).approximate_member_count
+                if '{member_count}' in data['farewell']['description'] else None
+            )
         ),
         color=embed_color
     ).set_image(card_file), card_file
