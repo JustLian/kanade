@@ -70,8 +70,7 @@ async def greeting(event: hikari.MemberCreateEvent):
     try:
         await plugin.client.app.rest.create_message(
             data['greetings']['channel'],
-            embed=embed,
-            attachment=card_file
+            embed=embed
         )
     except hikari.NotFoundError:
         pass

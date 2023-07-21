@@ -52,8 +52,7 @@ async def farewell(event: hikari.MemberDeleteEvent) -> None:
     try:
         await plugin.client.app.rest.create_message(
             data['farewell']['channel'],
-            embed=embed,
-            attachment=card_file
+            embed=embed
         )
     except hikari.NotFoundError:
         pass
