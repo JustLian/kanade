@@ -15,7 +15,6 @@ def generate_key(api_id: str) -> str:
 
 
 def authenticate_user(apiKey: str = fastapi.Header(None), apiId: str = fastapi.Header(None)):
-    print(apiKey, apiId, generate_key(apiId))
     if (
         apiKey is None
         or apiId is None
@@ -87,7 +86,7 @@ def load(app: fastapi.FastAPI, plugin: crescent.Plugin[hikari.GatewayBot, Model]
             guild = plugin.app.cache.get_guild(guild_id)
             if guild is None or guild.icon_url is None:
                 guild = await plugin.app.rest.fetch_guild(guild_id)
-            
+
             result.append({'id': str(guild.id), 'name': guild.name, 'img': guild.icon_url.url})
 
         return result

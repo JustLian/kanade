@@ -78,7 +78,7 @@ async def greeting(event: hikari.MemberCreateEvent):
         return
     embed, card_file = r
 
-    data = await plugin.model.db_guilds({'_id': event.guild_id})
+    data = await plugin.model.db_guilds.find_one({'_id': event.guild_id})
     try:
         await plugin.client.app.rest.create_message(
             data['greetings']['channel'],
