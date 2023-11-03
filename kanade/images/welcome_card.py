@@ -133,8 +133,6 @@ def composite_frame(
     return img
 
 
-
-
 def generate(
         pfp: Image.Image,
         guild: str, username: str,
