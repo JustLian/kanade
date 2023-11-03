@@ -3,10 +3,11 @@ import hikari
 import crescent
 import kanade
 from kanade import db, utils
+from kanade.core.bot import Model
 import toolbox
 
 
-plugin = crescent.Plugin()
+plugin = crescent.Plugin[hikari.GatewayBot, Model]()
 debug = crescent.Group('debug')
 
 
@@ -44,7 +45,7 @@ class InfoCommand:
     async def callback(self, ctx: crescent.Context):
         self.doc_id = int(self.doc_id)
         if self.coll == 'guilds':
-            data = db.find_document(plugin.model.db_guilds, {'_id': self.doc_id})
+            data = await plugin.model.db_guild.find_one({'_id': self.doc_id})
         else:
             return await ctx.respond(embed=hikari.Embed(
                 title='No collection named {}'.format(self.coll),

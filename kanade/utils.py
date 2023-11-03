@@ -12,3 +12,9 @@ def readable_dict(d: dict) -> list:
         else:
             r.append('{}: {}'.format(k, v))
     return r
+
+
+def to_rgb(hx: str) -> tuple[int, int, int]:
+    if hx.startswith('#'):
+        hx = hx[1:]
+    return tuple(int(hx[i:i+2], 16) for i in (0, 2, 4))

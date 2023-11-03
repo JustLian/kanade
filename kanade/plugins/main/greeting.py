@@ -8,13 +8,15 @@ from PIL import Image
 from kanade.images import welcome_card
 import kanade
 from kanade.plugins.main.debug import debug
+from kanade.utils import to_rgb
+from kanade.core.bot import Model
 
 
-plugin = crescent.Plugin()
+plugin = crescent.Plugin[hikari.GatewayBot, Model]()
 
 
 async def construct_embed(member: hikari.Member, guild: hikari.GatewayGuild) -> hikari.Embed:
-    data = db.find_document(plugin.model.db_guilds, {'_id': guild.id})
+    data = await plugin.model.db_guilds.find_one({'_id': guild.id})
 
     if not data['greetings']['enabled']:
         return
@@ -22,7 +24,17 @@ async def construct_embed(member: hikari.Member, guild: hikari.GatewayGuild) -> 
     try:
         embed_color = hikari.Color.from_hex_code(data['greetings']['color'])
     except ValueError:
-        return hikari.Embed(title='НЕВЕРНЫЙ HEX', color=kanade.Colors.ERROR), None
+        return hikari.Embed(title='Неверный HEX в embed_color', color=kanade.Colors.ERROR), None
+
+    try:
+        glow_colors = (to_rgb(data['greetings']['glow_color1']), to_rgb(data['greetings']['glow_color2']))
+    except ValueError:
+        return hikari.Embed(title='Неверный HEX в glow_colors', color=kanade.Colors.ERROR), None
+
+    try:
+        border_colors = (to_rgb(data['greetings']['border_color1']), to_rgb(data['greetings']['border_color2']))
+    except ValueError:
+        return hikari.Embed(title='Неверный HEX в border_colors', color=kanade.Colors.ERROR), None
     
     # downloading user's pfp
     io_data = None
@@ -38,7 +50,7 @@ async def construct_embed(member: hikari.Member, guild: hikari.GatewayGuild) -> 
     
     # generate card
     card = await asyncio.get_event_loop().run_in_executor(
-        None, welcome_card.generate, Image.open(io_data).convert('RGBA'), guild.name, str(member)
+        None, welcome_card.generate, Image.open(io_data).convert('RGBA'), guild.name, str(member), "./assets/font.ttf", glow_colors, border_colors
     )
     card_file = hikari.Bytes(card, "card.gif")
 
@@ -66,7 +78,7 @@ async def greeting(event: hikari.MemberCreateEvent):
         return
     embed, card_file = r
 
-    data = db.find_document(plugin.model.db_guilds, {'_id': event.guild_id})
+    data = await plugin.model.db_guilds({'_id': event.guild_id})
     try:
         await plugin.client.app.rest.create_message(
             data['greetings']['channel'],

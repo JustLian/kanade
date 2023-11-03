@@ -7,13 +7,14 @@ import kanade
 from kanade.plugins.main.debug import debug
 from random import choice
 from glob import glob
+from kanade.core.bot import Model
 
 
-plugin = crescent.Plugin()
+plugin = crescent.Plugin[hikari.GatewayBot, Model]()
 
 
 async def construct_embed(member: hikari.Member, guild: hikari.RESTGuild) -> hikari.Embed:
-    data = db.find_document(plugin.model.db_guilds, {'_id': guild.id})
+    data = await plugin.model.db_guilds.find_one({'_id': guild.id})
 
     if not data['farewell']['enabled']:
         return
@@ -48,11 +49,11 @@ async def farewell(event: hikari.MemberDeleteEvent) -> None:
         return
     embed, card_file = r
 
-    data = db.find_document(plugin.model.db_guilds, {'_id': event.guild_id})
+    data = await plugin.model.db_guilds.find_one({'_id': event.guild_id})
     try:
         await plugin.client.app.rest.create_message(
             data['farewell']['channel'],
             embed=embed
         )
-    except hikari.NotFoundError:
+    except hikari.NotFoundError and hikari.BadRequestError:
         pass

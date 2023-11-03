@@ -20,7 +20,7 @@ def compose_border(
     )
 
     gs = size[0] * 3
-    gradient = generate_gradient((255, 0, 0), (0, 0, 0), gs, gs)
+    gradient = generate_gradient(color1, color2, gs, gs)
     gradient = gradient.rotate(rotation)
 
     res = gradient.crop(
@@ -135,7 +135,13 @@ def composite_frame(
 
 
 
-def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/font.ttf") -> BytesIO:
+def generate(
+        pfp: Image.Image,
+        guild: str, username: str,
+        font_path="./assets/font.ttf",
+        glow_colors: tuple[tuple, tuple] = ((255, 255, 255), (255, 0, 0)),
+        border_colors: tuple[tuple, tuple] = ((255, 0, 0), (0, 0, 0))
+    ) -> BytesIO:
     """Generate welcome card gif"""
 
     # Creating background generator
@@ -180,7 +186,7 @@ def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/fo
     )
 
     # creating glow around the image
-    glow = generate_glow((round(pfp.size[0] * 1.3),) * 2)\
+    glow = generate_glow((round(pfp.size[0] * 1.3),) * 2, color1=glow_colors[0], color2=glow_colors[1])\
         .filter(ImageFilter.GaussianBlur(4))
 
     # Settings up text
@@ -194,7 +200,7 @@ def generate(pfp: Image.Image, guild: str, username: str, font_path="./assets/fo
         itertools.cycle(bg_sequence()), itertools.cycle(range(0, 360, 30)), range(0, 360, 15)
     ):
         frame = composite_frame(
-            guild, username, bg_frame, pfp, glow.rotate(d1), compose_border(bg.size, d2),
+            guild, username, bg_frame, pfp, glow.rotate(d1), compose_border(bg.size, d2, color1=border_colors[0], color2=border_colors[1]),
             u_font, g_font, uw, uh, gw, gh, text_color
         )
         fobj = BytesIO()

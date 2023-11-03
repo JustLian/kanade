@@ -5,17 +5,16 @@ import kanade
 from kanade import db
 from datetime import datetime, timezone
 from time import time
+from kanade.core.bot import Model
 
 
-plugin = crescent.Plugin()
+plugin = crescent.Plugin[hikari.GatewayBot, Model]()
 handeled = []
 quited = {}
 
 
 async def send(guild, event, **kwargs):
-    c = db.find_document(
-        plugin.model.db_guilds, {'_id': guild}
-    )['logs'][event]
+    c = await plugin.model.db_guilds.find_one({'_id': guild})['logs'][event]
 
     if c is None:
         return

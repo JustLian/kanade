@@ -5,9 +5,11 @@ import kanade
 import asyncio
 import re
 from kanade import db
+from kanade.core.hooks import is_server_manager
+from kanade.core.bot import Model
 
 
-plugin = crescent.Plugin()
+plugin = crescent.Plugin[hikari.GatewayBot, Model]()
 
 
 class Patterns:
@@ -30,7 +32,11 @@ settings = {
         'description': ('описание', str),
         'channel': ('канал', hikari.GuildTextChannel),
         'enabled': ('включить?', bool),
-        'color': ('цвет (HEX)', str)
+        'color': ('цвет сообщения (HEX)', str),
+        'glow_color1': ('первый цвет подсветки (HEX)', str),
+        'glow_color2': ('второй цвет подсветки (HEX)', str),
+        'border_color1': ('первый цвет рамки (HEX)', str),
+        'border_color2': ('второй цвет рамки (HEX)', str)
     },
     'farewell': {
         '_': 'сообщения при выходе',
@@ -46,7 +52,8 @@ settings = {
 async def section_autocomplete(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ):
-    return toolbox.as_command_choices([[settings[key]['_'], key] for key in settings.keys()])
+    # return toolbox.as_command_choices([[settings[key]['_'], key] for key in settings.keys()])
+    return [[settings[key]['_'], key] for key in settings.keys()]
 
 
 async def key_autocomplete(
@@ -57,9 +64,12 @@ async def key_autocomplete(
     if ctx.options['section'] not in settings:
         return []
     
-    return toolbox.as_command_choices([[v[0], k] for k, v in settings[
+    # return toolbox.as_command_choices([[v[0], k] for k, v in settings[
+    #     ctx.options['section']
+    # ].items() if k != '_'])
+    return [[v[0], k] for k, v in settings[
         ctx.options['section']
-    ].items() if k != '_'])
+    ].items() if k != '_']
 
 
 async def parse_param(msg: hikari.Message, t):
@@ -105,6 +115,45 @@ async def parse_param(msg: hikari.Message, t):
 
 
 @plugin.include
+@crescent.hook(is_server_manager)
+@crescent.command(
+    name='dashboard_access',
+    description='Выдать/забрать права на управление ботом через веб-панель (kanade.ekr.moe/dashboard)'
+)
+class DashAccess:
+    target_user = crescent.option(hikari.User, 'Пользователь')
+    toggle = crescent.option(str, 'Выдать права?', choices=(('да', '1'), ('нет', '0')))
+
+    async def callback(self, ctx: crescent.Context):
+        if int(self.toggle):
+            prev_managers = (await plugin.model.db_guilds.find_one({'_id': ctx.guild_id}))['managers']
+            if self.target_user.id not in prev_managers:
+                prev_managers.append(self.target_user.id)
+                plugin.model.db_guilds.update_one({'_id': ctx.guild_id}, {'$set': {'managers': prev_managers}})
+
+            await ctx.respond(embed=hikari.Embed(
+                title='Права выданы',
+                description='Теперь {} может управлять ботом через https://kanade.ekr.moe'.format(
+                    self.target_user.mention
+                ), color=kanade.Colors.SUCCESS
+            ))
+            return
+
+        prev_managers = (await plugin.model.db_guilds.find_one({'_id': ctx.guild_id}))['managers']
+        if self.target_user.id in prev_managers:
+            prev_managers.remove(self.target_user.id)
+            plugin.model.db_guilds.update_one({'_id': ctx.guild_id}, {'$set': {'managers': prev_managers}})
+        
+        await ctx.respond(embed=hikari.Embed(
+            title='Права удалены',
+            description='Теперь {} не может управлять ботом через сайт'.format(
+                self.target_user.mention
+            ), color=kanade.Colors.SUCCESS
+        ))
+
+
+@plugin.include
+@crescent.hook(is_server_manager)
 @crescent.command(
     name='settings',
     description='Изменить настройки этого сервера'
@@ -163,8 +212,7 @@ class Settings:
                 color=kanade.Colors.ERROR
             ))
 
-        db.update_document(
-            plugin.model.db_guilds,
+        await plugin.model.db_guilds.update_one(
             {'_id': ctx.guild_id},
             {self.section + '.' + self.key: r[0]}
         )
