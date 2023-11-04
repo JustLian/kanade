@@ -23,7 +23,7 @@ bot = hikari.GatewayBot(
 
 model = Model()
 bot.event_manager.subscribe(hikari.StartedEvent, model.on_ready)
-client = crescent.Client(bot, model=model, default_guild=cfg['discord']['guild'])
+client = crescent.Client(bot, model=model, default_guild=cfg['discord']['guild'] if cfg['discord']['guild'] != -1 else None)
 
 client.plugins.load_folder('kanade.plugins')
 client.plugins.load('kanade.api.plugin')

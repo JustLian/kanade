@@ -1,7 +1,10 @@
-pymongo
 hikari
 hikari-crescent
 hikari-toolbox
 asyncio
-html2image
 motor
+pillow
+uvicorn
+crescent
+aiohttp
+numpy

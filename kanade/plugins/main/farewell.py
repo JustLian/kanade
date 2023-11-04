@@ -1,10 +1,6 @@
 import hikari
 import crescent
-import asyncio
-from kanade import db
-import aiohttp
 import kanade
-from kanade.plugins.main.debug import debug
 from random import choice
 from glob import glob
 from kanade.core.bot import Model

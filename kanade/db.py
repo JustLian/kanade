@@ -1,4 +1,3 @@
-from pymongo.mongo_client import MongoClient
 import motor.motor_asyncio
 from kanade import cfg
 import os
