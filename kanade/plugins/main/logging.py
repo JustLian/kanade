@@ -14,7 +14,7 @@ quited = {}
 
 
 async def send(guild, event, **kwargs):
-    c = await plugin.model.db_guilds.find_one({'_id': guild})['logs'][event]
+    c = (await plugin.model.db_guilds.find_one({'_id': guild}))['logs'][event]
 
     if c is None:
         return

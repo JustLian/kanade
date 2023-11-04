@@ -214,7 +214,7 @@ class Settings:
 
         await plugin.model.db_guilds.update_one(
             {'_id': ctx.guild_id},
-            {self.section + '.' + self.key: r[0]}
+            {'$set': {self.section + '.' + self.key: r[0]}}
         )
         await ctx.respond(embed=hikari.Embed(
             title='Успешно',
