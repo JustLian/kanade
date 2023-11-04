@@ -5,6 +5,6 @@ asyncio
 motor
 pillow
 uvicorn
-crescent
 aiohttp
 numpy
+fastapi
