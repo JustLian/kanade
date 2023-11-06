@@ -56,7 +56,7 @@ async def construct_embed(member: hikari.Member, guild: hikari.GatewayGuild) -> 
     
     # generate card
     card = await asyncio.get_event_loop().run_in_executor(
-        None, welcome_card.generate, Image.open(io_data).convert('RGBA'), guild.name, str(member), "./assets/font.ttf", glow_colors, border_colors
+        None, welcome_card.generate, Image.open(io_data).convert('RGBA'), guild.name, member.username, "./assets/font.ttf", glow_colors, border_colors
     )
     card_file = hikari.Bytes(card, "card.gif")
 
