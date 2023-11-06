@@ -133,6 +133,8 @@ def load(app: fastapi.FastAPI, plugin: crescent.Plugin[hikari.GatewayBot, Model]
         result = []
 
         for channel in await plugin.app.rest.fetch_guild_channels(payload.guild_id):
+            if channel.type != hikari.ChannelType.GUILD_TEXT:
+                continue
             result.append((str(channel.id), channel.name))
 
         return result

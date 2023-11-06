@@ -80,12 +80,19 @@ def generate_glow(
     return im
 
 
-def get_text_size(text, width, font_path='./assets/font.ttf') -> tuple[float, int]:
-    """Find font size for specific text, that would fit to passed width"""
+def get_text_size(text, width, font_path='./assets/font.ttf') -> tuple[int, int, int]:
+    """
+    Find font size for specific text, that would fit to passed width
+
+    Returns tuple of maximum font size, width and height
+    """
     for size in range(1, 150):
         font = ImageFont.truetype(font_path, size=size)
-        w, h = font.getsize(text)
-    
+        left, top, right, bottom = font.getbbox(text)
+        w, h = (
+            right - left,
+            bottom - top,
+        )
         if w > width:
             break
         
