@@ -40,7 +40,6 @@ async def construct_embed(user: hikari.User, guild: hikari.RESTGuild) -> hikari.
 @crescent.event
 async def farewell(event: hikari.MemberDeleteEvent) -> None:
     guild = await plugin.client.app.rest.fetch_guild(event.guild_id)
-    print(event.user.username, event.user)
     r = await construct_embed(event.user, guild)
     if r is None:
         return
