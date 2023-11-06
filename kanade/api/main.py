@@ -4,8 +4,34 @@ import crescent
 import fastapi
 from pydantic import BaseModel
 from kanade.core.bot import Model
+from kanade.db import defaults
 import kanade
 import hashlib
+
+
+ALLOWED_DB_PATCH_ROUTES = [
+    'greetings',
+    'farewell',
+]
+
+
+def matches_scheme(scheme, check_scheme):
+    if isinstance(scheme, dict) and isinstance(check_scheme, dict):
+        for key, value in check_scheme.items():
+            if key not in scheme:
+                return False
+            if not matches_scheme(scheme[key], value):
+                return False
+        return True
+    elif isinstance(scheme, list) and isinstance(check_scheme, list):
+        if len(scheme) != len(check_scheme):
+            return False
+        for i in range(len(scheme)):
+            if not matches_scheme(scheme[i], check_scheme[i]):
+                return False
+        return True
+    else:
+        return isinstance(check_scheme, type(scheme))
 
 
 def generate_key(api_id: str) -> str:
@@ -155,6 +181,12 @@ def load(app: fastapi.FastAPI, plugin: crescent.Plugin[hikari.GatewayBot, Model]
     ):
         if not (await has_access(api_data[1], payload.guild_id)):
             raise fastapi.HTTPException(status_code=401, detail="Unauthorized")
+
+        if any([key not in ALLOWED_DB_PATCH_ROUTES for key in payload.data.keys()]):
+            raise fastapi.HTTPException(status_code=400, detail="Bad Request")
+
+        if not matches_scheme(defaults('guilds'), payload.data):
+            raise fastapi.HTTPException(status_code=400, detail="Bad Request")
 
         result = await plugin.model.db_guilds.update_one(
             {'_id': payload.guild_id},
