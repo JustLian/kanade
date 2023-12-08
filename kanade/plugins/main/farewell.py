@@ -4,16 +4,23 @@ import kanade
 from random import choice
 from glob import glob
 from kanade.core.bot import Model
+from kanade import db
+from kanade.utils import text_format
+import kanade.plugins.main.embed_errors as emors
 
 
 plugin = crescent.Plugin[hikari.GatewayBot, Model]()
 
 
-async def construct_embed(member: hikari.Member, guild: hikari.RESTGuild) -> hikari.Embed:
+async def construct_embed(user: hikari.User, guild: hikari.RESTGuild) -> hikari.Embed:
     data = await plugin.model.db_guilds.find_one({'_id': guild.id})
 
     if not data['farewell']['enabled']:
         return
+
+    title = data['farewell']['title']
+    if len(title) > 256:
+        title = emors.title_exceeded + db.defaults("guilds")['farewell']['title']
     
     try:
         embed_color = hikari.Color.from_hex_code(data['farewell']['color'])
@@ -24,14 +31,15 @@ async def construct_embed(member: hikari.Member, guild: hikari.RESTGuild) -> hik
     gif = choice(glob('./assets/backgrounds/*.gif'))
     card_file = hikari.File(gif)
 
+    formatted_description = text_format(data['farewell']['description'], user, guild)
+
+    if len(formatted_description) > 4096:
+        text_data = emors.description_exceeded + db.defaults("guilds")['farewell']['description']
+        formatted_description = text_format(text_data, user, guild)
+
     return hikari.Embed(
-        title=data['farewell']['title'],
-        description=data['farewell']['description'].format(
-            guild_name=guild.name,
-            user_mention=member.mention,
-            username=str(member),
-            member_count=guild.approximate_member_count
-        ),
+        title=title,
+        description=formatted_description,
         color=embed_color
     ).set_image(card_file), card_file
 
@@ -40,10 +48,10 @@ async def construct_embed(member: hikari.Member, guild: hikari.RESTGuild) -> hik
 @crescent.event
 async def farewell(event: hikari.MemberDeleteEvent) -> None:
     guild = await plugin.client.app.rest.fetch_guild(event.guild_id)
-    r = await construct_embed(event.old_member, guild)
+    r = await construct_embed(event.user, guild)
     if r is None:
         return
-    embed, card_file = r
+    embed, _card_file = r
 
     data = await plugin.model.db_guilds.find_one({'_id': event.guild_id})
     try:

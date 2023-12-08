@@ -10,6 +10,8 @@ import kanade
 from kanade.plugins.main.debug import debug
 from kanade.utils import to_rgb
 from kanade.core.bot import Model
+import kanade.plugins.main.embed_errors as emors
+from kanade.utils import text_format
 
 
 plugin = crescent.Plugin[hikari.GatewayBot, Model]()
@@ -20,6 +22,10 @@ async def construct_embed(member: hikari.Member, guild: hikari.GatewayGuild) -> 
 
     if not data['greetings']['enabled']:
         return
+    
+    title = data['greetings']['title']
+    if len(title) > 256:
+        title = emors.title_exceeded + db.defaults("guilds")['greetings']['title']
     
     try:
         embed_color = hikari.Color.from_hex_code(data['greetings']['color'])
@@ -50,22 +56,21 @@ async def construct_embed(member: hikari.Member, guild: hikari.GatewayGuild) -> 
     
     # generate card
     card = await asyncio.get_event_loop().run_in_executor(
-        None, welcome_card.generate, Image.open(io_data).convert('RGBA'), guild.name, str(member), "./assets/font.ttf", glow_colors, border_colors
+        None, welcome_card.generate, Image.open(io_data).convert('RGBA'), guild.name, member.username, "./assets/font.ttf", glow_colors, border_colors
     )
     card_file = hikari.Bytes(card, "card.gif")
 
+    guild = await guild.app.rest.fetch_guild(guild)
+    formatted_description = text_format(data['greetings']['description'], member, guild)
+
+    if len(formatted_description) > 4096:
+        text_data = emors.description_exceeded + db.defaults("guilds")['greetings']['description']
+        formatted_description = text_format(text_data, member, guild)
+
     # create embed
     return hikari.Embed(
-        title=data['greetings']['title'],
-        description=data['greetings']['description'].format(
-            guild_name=guild.name,
-            user_mention=member.mention,
-            username=str(member),
-            member_count=(
-                (await guild.app.rest.fetch_guild(guild)).approximate_member_count
-                if '{member_count}' in data['greetings']['description'] else None
-            )
-        ),
+        title=title,
+        description=formatted_description,
         color=embed_color
     ).set_image(card_file), card_file
 
@@ -76,7 +81,7 @@ async def greeting(event: hikari.MemberCreateEvent):
     r = await construct_embed(event.member, event.get_guild())
     if r is None:
         return
-    embed, card_file = r
+    embed, _card_file = r
 
     data = await plugin.model.db_guilds.find_one({'_id': event.guild_id})
     try:

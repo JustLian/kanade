@@ -199,15 +199,15 @@ async def member_joined(event: hikari.MemberCreateEvent):
 @crescent.event
 async def member_left(event: hikari.MemberDeleteEvent):
     global quited
-    quited[event.old_member.id] = event.old_member
+    quited[event.user.id] = event.user
     await asyncio.sleep(4)
-    if event.old_member.id in handeled:
-        handeled.remove(event.old_member.id)
+    if event.user.id in handeled:
+        handeled.remove(event.user.id)
         return
 
     await send(event.guild_id, 'quit', embed=hikari.Embed(
         title='Пользователь покинул сервер',
-        description="{} ({})".format(event.old_member, event.old_member.id),
+        description="{} ({})".format(event.user, event.user.id),
         timestamp=datetime.now(tz=timezone.utc),
         color=kanade.Colors.SUCCESS
     ).add_field(
