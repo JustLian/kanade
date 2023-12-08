@@ -124,30 +124,29 @@ class DashAccess:
     toggle = crescent.option(str, 'Выдать права?', choices=(('да', '1'), ('нет', '0')))
 
     async def callback(self, ctx: crescent.Context):
-        if int(self.toggle):
-            prev_managers = (await plugin.model.db_guilds.find_one({'_id': ctx.guild_id}))['managers']
+        guild_data = await plugin.model.db_guilds.find_one({'_id': ctx.guild_id})
+        prev_managers = guild_data['managers'].copy()
+
+        if self.toggle == '1':
             if self.target_user.id not in prev_managers:
                 prev_managers.append(self.target_user.id)
                 plugin.model.db_guilds.update_one({'_id': ctx.guild_id}, {'$set': {'managers': prev_managers}})
 
             await ctx.respond(embed=hikari.Embed(
                 title='Права выданы',
-                description='Теперь {} может управлять ботом через https://kanade.ekr.moe'.format(
-                    self.target_user.mention
-                ), color=kanade.Colors.SUCCESS
+                description=f'Теперь {self.target_user.mention} может управлять ботом через https://kanade.ekr.moe',
+                color=kanade.Colors.SUCCESS
             ))
             return
 
-        prev_managers = (await plugin.model.db_guilds.find_one({'_id': ctx.guild_id}))['managers']
         if self.target_user.id in prev_managers:
             prev_managers.remove(self.target_user.id)
             plugin.model.db_guilds.update_one({'_id': ctx.guild_id}, {'$set': {'managers': prev_managers}})
-        
+
         await ctx.respond(embed=hikari.Embed(
             title='Права удалены',
-            description='Теперь {} не может управлять ботом через сайт'.format(
-                self.target_user.mention
-            ), color=kanade.Colors.SUCCESS
+            description=f'Теперь {self.target_user.mention} не может управлять ботом через сайт',
+            color=kanade.Colors.SUCCESS
         ))
 
 

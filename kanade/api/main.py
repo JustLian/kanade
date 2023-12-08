@@ -93,6 +93,7 @@ def load(app: fastapi.FastAPI, plugin: crescent.Plugin[hikari.GatewayBot, Model]
     ):
         if payload.secret != kanade.cfg['api']['api_secret']:
             raise fastapi.HTTPException(status_code=401, detail='Wrong api secret.')
+            return {''}
 
         return {'token': generate_key(str(payload.user_id))}
 
